@@ -1,0 +1,36 @@
+<h1>SiteSlugAsSubdomain module</h1>
+
+<p>
+  <?php echo $this->translate('This module allows to considerer sites slugs as subdomains rather than URL params'); ?>.<br />
+  <?php echo $this->translate('So, the original URL <strong>www.myapp.com/s/mysite</strong> will become <strong>mysite.myapp.com</strong>'); ?>.<br />
+  <?php echo $this->translate('The Omeka admin dashboard will always be accessible at its original address (e.g. <strong>www.myapp.com/admin</strong>)'); ?>.
+</p>
+
+<h3><?php echo $this->translate('Requirements'); ?></h3>
+<ul>
+  <li><?php echo $this->translate('The hosts must be configured on your webserver (<strong>mysite.myapp.com</strong> must anwser the ping).') ?></li>
+  <li><?php echo $this->translate('Your sites must be <a target="_blank" href="https://omeka.org/s/docs/user-manual/sites/#publication-settings">defined as public</a>.') ?></li>
+  <li><?php echo $this->translate('Your must set your hostname below') ?>.</li>
+</ul>
+
+<form method="post">
+  <h3><?php echo $this->translate('Hostname'); ?></h3>
+  <p>
+    <?php echo $this->translate('Your hostname <b>without subdomain</b> is needed to enable subdomains'); ?>.<br /><br />
+    <?php echo $this->translate('Here are some examples') ?> :
+    <ul>
+      <li>http://www.example.com => <strong>example.com</strong></li>
+      <li>http://www.example.com/ => <strong>example.com</strong></li>
+      <li>http://www.test.example.com => <strong>test.example.com</strong></li>
+      <li>http://www.example.co.uk => <strong>example.co.uk</strong></li>
+      <li>http://localhost => <strong>locahost</strong></li>
+    </ul>
+  </p>
+  <p><?php echo $this->translate('Provide your hostname without subdomain *') ?>&nbsp;&nbsp;
+    <input type="text" required="true" name="hostname" value="<?php echo $this->hostname; ?>"/><br />
+  </p>
+  <p>
+    <input type="submit" value="<?php echo $this->translate("Validate") ?>">
+  </p>
+</form>
+
