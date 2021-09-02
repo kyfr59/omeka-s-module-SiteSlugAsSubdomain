@@ -3,10 +3,10 @@
 namespace SiteSlugAsSubdomain;
 
 use Omeka\Module\AbstractModule;
-use Zend\Mvc\MvcEvent;
-use Zend\View\Model\ViewModel;
-use Zend\Mvc\Controller\AbstractController;
-use Zend\View\Renderer\PhpRenderer;
+use Laminas\Mvc\MvcEvent;
+use Laminas\View\Model\ViewModel;
+use Laminas\Mvc\Controller\AbstractController;
+use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Api\Exception\NotFoundException;
 
 class Module extends AbstractModule
@@ -83,8 +83,8 @@ class Module extends AbstractModule
 
         $authorizedSlugsRegExp = $this->getSitesSlugsRegExp();
 
-        // Replace the "/s/site-slug" type (\Zend\Router\Http\Segment) by a dynamic subdomain type (\Zend\Router\Http\Hostname)
-        $route['type'] = \Zend\Router\Http\Hostname::class;
+        // Replace the "/s/site-slug" type (\Laminas\Router\Http\Segment) by a dynamic subdomain type (\Laminas\Router\Http\Hostname)
+        $route['type'] = \Laminas\Router\Http\Hostname::class;
 
         // Define the route
         $hostname = urlencode($hostname);
@@ -95,7 +95,7 @@ class Module extends AbstractModule
 
         // Handle the "/" route
         $route['child_routes']['home'] = [
-                                            'type' => \Zend\Router\Http\Segment::class,
+                                            'type' => \Laminas\Router\Http\Segment::class,
                                             'options' => [
                                                 'route' => '/',
                                                 'defaults' => [
