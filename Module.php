@@ -3,18 +3,15 @@
 namespace SiteSlugAsSubdomain;
 
 use Omeka\Module\AbstractModule;
-use Zend\Mvc\MvcEvent;
-use Zend\View\Model\ViewModel;
-use Zend\Mvc\Controller\AbstractController;
-use Zend\View\Renderer\PhpRenderer;
+use Laminas\Mvc\MvcEvent;
+use Laminas\View\Model\ViewModel;
+use Laminas\Mvc\Controller\AbstractController;
+use Laminas\View\Renderer\PhpRenderer;
 use Omeka\Api\Exception\NotFoundException;
+use SiteSlugAsSubdomain\Form\ConfigForm;
 
 class Module extends AbstractModule
 {
-    public function getConfig()
-    {
-        return include __DIR__ . '/config/module.config.php';
-    }
 
     public function onBootstrap(MvcEvent $event)
     {
@@ -30,18 +27,46 @@ class Module extends AbstractModule
      * Load the config form
      *
      * @param PhpRenderer $renderer
-     * @return ViewModel The view
      */
     public function getConfigForm(PhpRenderer $renderer)
     {
-        $view = new ViewModel();
-        $view->setTemplate("config_form");
-
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
-        $hostname = $settings->get('hostname');
+        $translator = $this->getServiceLocator()->get('MvcTranslator');
+        $form = new ConfigForm;
+        $form->init();
+        $form->setData([
+            'hostname' => $settings->get('hostname'),
+        ]);
+        $html = <<<EOD
+        <h1>SiteSlugAsSubdomain module</h1>
 
-        $view->setVariable('hostname', $hostname);
-        return $renderer->render($view);
+        <p>
+          {$translator->translate('This module allows to considerer sites slugs as subdomains rather than URL params')}.<br />
+          {$translator->translate('So, the original URL <strong>www.myapp.com/s/mysite</strong> will become <strong>mysite.myapp.com</strong>')}.<br />
+          {$translator->translate('The Omeka admin dashboard will always be accessible at its original address (e.g. <strong>www.myapp.com/admin</strong>)')}.
+        </p>
+
+        <h3>{$translator->translate('Requirements')}</h3>
+        <ul>
+          <li>{$translator->translate('The hosts must be configured on your webserver (<strong>mysite.myapp.com</strong> must anwser the ping).')}</li>
+          <li>{$translator->translate('Your sites must be <a target="_blank" href="https://omeka.org/s/docs/user-manual/sites/#publication-settings">defined as public</a>.')}</li>
+          <li>{$translator->translate('Your must set your hostname below')}.</li>
+        </ul>
+        <h3>{$translator->translate('Hostname')}</h3>
+        <p>
+          {$translator->translate('Your hostname <b>without subdomain</b> is needed to enable subdomains')}.<br /><br />
+          {$translator->translate('Here are some examples')}:
+          <ul>
+            <li>http://www.example.com => <strong>example.com</strong></li>
+            <li>http://www.example.com/ => <strong>example.com</strong></li>
+            <li>http://www.test.example.com => <strong>test.example.com</strong></li>
+            <li>http://www.example.co.uk => <strong>example.co.uk</strong></li>
+            <li>http://localhost => <strong>locahost</strong></li>
+          </ul>
+        </p>
+EOD;
+        $html .= $renderer->formCollection($form, false);
+        return $html;
     }
 
     /**
@@ -49,24 +74,31 @@ class Module extends AbstractModule
      *
      * @return String The hostname
      */
-    public function getHostnameFromSettings()
-    {
-        $settings = $this->getServiceLocator()->get('Omeka\Settings');
-        return $settings->get('hostname');
-    }
+     public function getHostnameFromSettings()
+     {
+         $settings = $this->getServiceLocator()->get('Omeka\Settings');
+         return $settings->get('hostname');
+     }
 
     /**
      * Store the hostname in the Omeka settings
      *
      * @return String The hostname
      */
-    public function handleConfigForm(AbstractController $controller)
-    {
-        $settings = $this->getServiceLocator()->get('Omeka\Settings');
-
-        $params = $controller->getRequest()->getPost();
-        $settings->set('hostname', $params['hostname']);
-    }
+     public function handleConfigForm(AbstractController $controller)
+     {
+         $settings = $this->getServiceLocator()->get('Omeka\Settings');
+         $form = new ConfigForm;
+         $form->init();
+         $form->setData($controller->params()->fromPost());
+         if (!$form->isValid()) {
+             $controller->messenger()->addErrors($form->getMessages());
+             return false;
+         }
+         $formData = $form->getData();
+         $settings->set('hostname', $formData['hostname']);
+         return true;
+     }
 
     /**
      * Handle the subdomains routing by updating the original Omeka's route
@@ -83,8 +115,8 @@ class Module extends AbstractModule
 
         $authorizedSlugsRegExp = $this->getSitesSlugsRegExp();
 
-        // Replace the "/s/site-slug" type (\Zend\Router\Http\Segment) by a dynamic subdomain type (\Zend\Router\Http\Hostname)
-        $route['type'] = \Zend\Router\Http\Hostname::class;
+        // Replace the "/s/site-slug" type (\Laminas\Router\Http\Segment) by a dynamic subdomain type (\Laminas\Router\Http\Hostname)
+        $route['type'] = \Laminas\Router\Http\Hostname::class;
 
         // Define the route
         $hostname = urlencode($hostname);
@@ -95,7 +127,7 @@ class Module extends AbstractModule
 
         // Handle the "/" route
         $route['child_routes']['home'] = [
-                                            'type' => \Zend\Router\Http\Segment::class,
+                                            'type' => \Laminas\Router\Http\Segment::class,
                                             'options' => [
                                                 'route' => '/',
                                                 'defaults' => [
